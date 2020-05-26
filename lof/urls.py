@@ -13,5 +13,6 @@ urlpatterns = [
     path('getlost/',views.GETLOST.as_view()),
     path('mylost/',views.MYLOST.as_view()),
     path('myfind/',views.MYFIND.as_view()),
-    path('getfind/',views.GETFIND.as_view())
+    path('getfind/',views.GETFIND.as_view()),
+    path('send2/',views.SEND2.as_view())
 ]

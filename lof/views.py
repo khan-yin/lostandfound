@@ -137,6 +137,8 @@ def readcnt():
     return a
 
 def devide(photo):
+    if photo is None:
+        return []
     m = photo.split(';')
     print(m)
     com=[]
@@ -145,20 +147,80 @@ def devide(photo):
     print(com)
     return com
 
+class SEND2(APIView):
+    count=readcnt()
+    def post(self, request):
+       try:
+           if request.method == 'POST':
+               hasimage = request.POST.get('hasimage')
+               print(type(hasimage))
+               event = Event()
+               if(hasimage=='1'):
+                   SEND.count+=1
+                   image = request.FILES['image']
+                   url='photo/'+str(SEND.count)+".jpg"
+                   filename = os.path.join(settings.STATICFILES_DIRS[0],url)
+                   print(filename)
+                   with open(filename, 'wb') as f:
+                       f.write(image.read())
+                       f.close()
+                   ones = '/static/' + url
+                   print(ones)
+                   event.photo=ones
+                   print('ok')
+               event.openid=request.POST.get('openid')
+               print(event.openid)
+               event.truename=request.POST.get('truename')
+               event.text=request.POST.get('text')
+               print(event.text)
+               event.type = request.POST.get('type')
+               event.phoneNumber = request.POST.get('phoneNumber')
+               event.status = request.POST.get('status')
+               event.qqNumber = request.POST.get('qqNumber')
+               event.date = request.POST.get('date')
+               event.time = request.POST.get('time')
+               event.avatarURL=request.POST.get('avatarURL')
+               print(event.avatarURL)
+               event.save()
+               return Response({"msg": "发送成功", "code": "200"})
+       except Exception as e:
+           traceback.print_exc()
+           # SEND.count=back
+           return Response({"msg": "发送失败"})
+       finally:
+           writecnt(SEND.count)
+
 class SEND(APIView):
     count=readcnt()
     def post(self, request):
        try:
            back=SEND.count
            if request.method == 'POST':
-               re = json.loads(request.body)
-               print(re)
+               # s=str(request.body)
+               # re=json.loads(s)
+               # print(re['openid'])
+               print(request.body)
+               event=Event()
+               event.openid = request.POST.get('openid')
+               print(event.openid)
+               event.truename = request.POST.get('truename')
+               print(event.truename)
+               event.text = request.POST.get('date')
+               event.qqNumber = request.POST.get('qqNumber')
+               event.phoneNumber = request.POST.get('phoneNumber')
+               event.type = request.POST.get('type')
+               event.date = request.POST.get('date')
+               event.time = request.POST.get('time')
+               event.status = request.POST.get('status')
+               event.iscard = request.POST.get('iscard')
+               event.avatarURL = request.POST.get('avatarURL')
                urls = ''
                photolist = ['photo1', 'photo2', 'photo3', 'photo4', 'photo5', 'photo6']
                for i in photolist:
-                   if re[i] != '':
+                   re = request.POST.get(i, '')
+                   if re != '':
                        SEND.count += 1
-                       img = re[i].split(',')[1]
+                       img = re.split(',')[1]
                        img = bytes(img, encoding='utf-8')
                        data = base64.b64decode(img)
                        url = "photo/" + str(SEND.count) + ".jpg"
@@ -171,23 +233,14 @@ class SEND(APIView):
                        print(ones)
                        urls += ones
                        print(urls)
+               event.photo=urls[:-1]
                writecnt(SEND.count)
-               Event.objects.create(openid=re['openid'],
-                                    truename=re['truename'],
-                                    text=re['text'],
-                                    photo=urls[:-1],
-                                    date=re['date'],
-                                    time=re['time'],
-                                    phoneNumber=re['phoneNumber'],
-                                    qqNumber=re['qqNumber'],
-                                    status=re['status'],
-                                    type=re['type'],
-                                    iscard=re['iscard'])
+               event.save()
                return Response({"msg": "发送成功", "code": "200"})
        except Exception as e:
            traceback.print_exc()
            SEND.count=back
-           return Response({"msg": "发送失败", "code": "404"})
+           return Response({"msg": "发送失败"})
        finally:
            writecnt(SEND.count)
 
@@ -197,6 +250,7 @@ class GETLOST(APIView):
     def get(self, request):
         page = int(request.GET['page'])
         print(page)
+        print(self.lenth)
         comments = []
         if page*5>self.lenth:
             res = self.result[(page - 1) * 5:self.lenth]
@@ -214,9 +268,10 @@ class GETLOST(APIView):
             com['status'] = one.status
             com['text'] = one.text
             com['type'] = one.type
+            com['avatarURL'] = one.avatarURL
             # print(one.id,one.name,one.message,one.date,one.time,one.emotion)
             comments.append(com)
-        print(comments)
+        # print(comments)
         return Response(comments)
 
 class GETFIND(APIView):
@@ -242,6 +297,7 @@ class GETFIND(APIView):
             com['status'] = one.status
             com['text'] = one.text
             com['type'] = one.type
+            com['avatarURL'] = one.avatarURL
             # print(one.id,one.name,one.message,one.date,one.time,one.emotion)
             comments.append(com)
         print(comments)
@@ -254,13 +310,15 @@ class MYLOST(APIView):
         openid = request.GET['openid']
         page = int(request.GET['page'])
         if(page==1):
-            self.result = Event.objects.filter(status__in=['1', '2']).filter(openid=openid)
-            self.lenth = len(self.result)
+            MYLOST.result = Event.objects.filter(status__in=['1', '2']).filter(openid=openid)
+            MYLOST.lenth = len(MYLOST.result)
+        print(MYLOST.result)
         comments = []
-        if page*5>self.lenth:
-            res = self.result[(page - 1) * 5:self.lenth]
+        if page*5>MYLOST.lenth:
+            res = MYLOST.result[(page - 1) * 5:MYLOST.lenth]
         else:
-            res=self.result[(page-1)*5:page*5]
+            res=MYLOST.result[(page-1)*5:page*5]
+        print("res:",res)
         for one in res:
             com = {}
             com['id'] = one.id
@@ -273,6 +331,7 @@ class MYLOST(APIView):
             com['status'] = one.status
             com['text'] = one.text
             com['type'] = one.type
+            com['avatarURL'] = one.avatarURL
             # print(one.id,one.name,one.message,one.date,one.time,one.emotion)
             comments.append(com)
         return Response(comments)
@@ -286,13 +345,13 @@ class MYFIND(APIView):
         openid = request.GET['openid']
         page = int(request.GET['page'])
         if (page == 1):
-            self.result = Event.objects.filter(status__in=['3', '4']).filter(openid=openid)
-            self.lenth = len(self.result)
+            MYFIND.result = Event.objects.filter(status__in=['3', '4']).filter(openid=openid)
+            MYFIND.lenth = len(MYFIND.result)
         comments = []
-        if page*5>self.lenth:
-            res = self.result[(page - 1) * 5:self.lenth]
+        if page*5>MYFIND.lenth:
+            res = MYFIND.result[(page - 1) * 5:MYFIND.lenth]
         else:
-            res=self.result[(page-1)*5:page*5]
+            res=MYFIND.result[(page-1)*5:page*5]
         for one in res:
             com = {}
             com['id'] = one.id
@@ -305,6 +364,7 @@ class MYFIND(APIView):
             com['status'] = one.status
             com['text'] = one.text
             com['type'] = one.type
+            com['avatarURL'] = one.avatarURL
             # print(one.id,one.name,one.message,one.date,one.time,one.emotion)
             comments.append(com)
         return Response(comments)

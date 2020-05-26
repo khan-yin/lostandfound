@@ -26,6 +26,7 @@ class Event(models.Model):
     # 1-丢失，2-丢失已找回，3-待招领，4-已经招领，12放到丢失模块，34放到招领模块
     type = models.CharField(max_length=10,blank=True,null=True)
     iscard=models.CharField(max_length=10,blank=True,null=True)
+    avatarURL = models.CharField(max_length=500, blank=True, null=True)
     #搜索分类y
     class Meta:
         db_table = 'event'
