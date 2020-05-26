@@ -29,4 +29,4 @@ class Event(models.Model):
     #搜索分类y
     class Meta:
         db_table = 'event'
-
+        ordering = ('-id',)

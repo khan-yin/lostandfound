@@ -1,3 +1,5 @@
+import traceback
+
 from django.shortcuts import render
 
 # Create your views here.
@@ -55,8 +57,9 @@ def wechatlogin(request):
         # 微信用户第一次登陆,新建用户
         user = Student.objects.create(openid=openid)
         print("ok")
+    finally:
         return HttpResponse(json.dumps(response),content_type='application/json; charset=utf-8')
-    return HttpResponse(json.dumps(response),content_type='application/json; charset=utf-8')
+
 
 def updateinfo(request):
     try:
@@ -114,10 +117,39 @@ class Test(APIView):
         }
         return Response(res)
 
+def writecnt(cnt):
+    cnt=str(cnt)
+    file=os.path.join(settings.STATICFILES_DIRS[0], "cnt.txt")
+    print(file)
+    with open(file, 'w') as f:
+        f.writelines(cnt)
+    f.close()
+
+def readcnt():
+    file=os.path.join(settings.STATICFILES_DIRS[0], "cnt.txt")
+    print(file)
+    with open(file, 'r') as f:
+        a = f.readline()
+    f.close()
+    print(type(a))
+    a=int(a)
+    print(a)
+    return a
+
+def devide(photo):
+    m = photo.split(';')
+    print(m)
+    com=[]
+    for i in range(len(m)):
+        com.append(str(m[i]))
+    print(com)
+    return com
+
 class SEND(APIView):
-    count=0
+    count=readcnt()
     def post(self, request):
        try:
+           back=SEND.count
            if request.method == 'POST':
                re = json.loads(request.body)
                print(re)
@@ -139,6 +171,7 @@ class SEND(APIView):
                        print(ones)
                        urls += ones
                        print(urls)
+               writecnt(SEND.count)
                Event.objects.create(openid=re['openid'],
                                     truename=re['truename'],
                                     text=re['text'],
@@ -151,44 +184,134 @@ class SEND(APIView):
                                     type=re['type'],
                                     iscard=re['iscard'])
                return Response({"msg": "发送成功", "code": "200"})
-       except Exception:
-           print(Exception)
+       except Exception as e:
+           traceback.print_exc()
+           SEND.count=back
            return Response({"msg": "发送失败", "code": "404"})
+       finally:
+           writecnt(SEND.count)
 
-@api_view(['GET'])
-def getevent(request):
-    page=int(request.GET['page'])
-    result = Event.objects.filter(id__gt=(page-1)*5).filter(id__lte=page*5)
-    comments = []
-    for one in result:
-        com = {}
-        com['id'] = one.id
-        com['truename'] = one.truename
-        com['photo']=devide(one.photo)
-        com['date'] = one.date
-        com['time'] = one.time
-        com['phoneNumber'] = one.phoneNumber
-        com['qqNumber'] = one.qqNumber
-        com['status'] = one.status
-        com['text'] = one.text
-        com['type'] = one.type
-        # print(one.id,one.name,one.message,one.date,one.time,one.emotion)
-        comments.append(com)
-    return Response(comments)
+class GETLOST(APIView):
+    result = Event.objects.filter(status__in=['1'])
+    lenth = len(result)
+    def get(self, request):
+        page = int(request.GET['page'])
+        print(page)
+        comments = []
+        if page*5>self.lenth:
+            res = self.result[(page - 1) * 5:self.lenth]
+        else:
+            res=self.result[(page-1)*5:page*5]
+        for one in res:
+            com = {}
+            com['id'] = one.id
+            com['truename'] = one.truename
+            com['photo'] = devide(one.photo)
+            com['date'] = one.date
+            com['time'] = one.time
+            com['phoneNumber'] = one.phoneNumber
+            com['qqNumber'] = one.qqNumber
+            com['status'] = one.status
+            com['text'] = one.text
+            com['type'] = one.type
+            # print(one.id,one.name,one.message,one.date,one.time,one.emotion)
+            comments.append(com)
+        print(comments)
+        return Response(comments)
 
-def devide(photo):
-    m = photo.split(';')
-    print(m)
-    com=[]
-    for i in range(len(m)):
-        com.append(str(m[i]))
-    print(com)
-    return com
-def mylost(request):
-    pass
+class GETFIND(APIView):
+    result = Event.objects.filter(status__in=['3'])
+    lenth = len(result)
+    def get(self, request):
+        page = int(request.GET['page'])
+        print(page)
+        comments = []
+        if page*5>self.lenth:
+            res = self.result[(page - 1) * 5:self.lenth]
+        else:
+            res=self.result[(page-1)*5:page*5]
+        for one in res:
+            com = {}
+            com['id'] = one.id
+            com['truename'] = one.truename
+            com['photo'] = devide(one.photo)
+            com['date'] = one.date
+            com['time'] = one.time
+            com['phoneNumber'] = one.phoneNumber
+            com['qqNumber'] = one.qqNumber
+            com['status'] = one.status
+            com['text'] = one.text
+            com['type'] = one.type
+            # print(one.id,one.name,one.message,one.date,one.time,one.emotion)
+            comments.append(com)
+        print(comments)
+        return Response(comments)
 
-def myfind(request):
-    pass
+class MYLOST(APIView):
+    result=None
+    lenth=0
+    def get(self, request):
+        openid = request.GET['openid']
+        page = int(request.GET['page'])
+        if(page==1):
+            self.result = Event.objects.filter(status__in=['1', '2']).filter(openid=openid)
+            self.lenth = len(self.result)
+        comments = []
+        if page*5>self.lenth:
+            res = self.result[(page - 1) * 5:self.lenth]
+        else:
+            res=self.result[(page-1)*5:page*5]
+        for one in res:
+            com = {}
+            com['id'] = one.id
+            com['truename'] = one.truename
+            com['photo'] = devide(one.photo)
+            com['date'] = one.date
+            com['time'] = one.time
+            com['phoneNumber'] = one.phoneNumber
+            com['qqNumber'] = one.qqNumber
+            com['status'] = one.status
+            com['text'] = one.text
+            com['type'] = one.type
+            # print(one.id,one.name,one.message,one.date,one.time,one.emotion)
+            comments.append(com)
+        return Response(comments)
+
+
+class MYFIND(APIView):
+    result = None
+    lenth = 0
+
+    def get(self, request):
+        openid = request.GET['openid']
+        page = int(request.GET['page'])
+        if (page == 1):
+            self.result = Event.objects.filter(status__in=['3', '4']).filter(openid=openid)
+            self.lenth = len(self.result)
+        comments = []
+        if page*5>self.lenth:
+            res = self.result[(page - 1) * 5:self.lenth]
+        else:
+            res=self.result[(page-1)*5:page*5]
+        for one in res:
+            com = {}
+            com['id'] = one.id
+            com['truename'] = one.truename
+            com['photo'] = devide(one.photo)
+            com['date'] = one.date
+            com['time'] = one.time
+            com['phoneNumber'] = one.phoneNumber
+            com['qqNumber'] = one.qqNumber
+            com['status'] = one.status
+            com['text'] = one.text
+            com['type'] = one.type
+            # print(one.id,one.name,one.message,one.date,one.time,one.emotion)
+            comments.append(com)
+        return Response(comments)
+
+
+
+
 
 def changeStatus(request):
     pass
