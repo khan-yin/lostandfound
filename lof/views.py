@@ -305,7 +305,6 @@ class GETFIND(APIView):
 
 class MYLOST(APIView):
     result=None
-    lenth=0
     def get(self, request):
         openid = request.GET['openid']
         page = int(request.GET['page'])
@@ -332,6 +331,7 @@ class MYLOST(APIView):
             com['text'] = one.text
             com['type'] = one.type
             com['avatarURL'] = one.avatarURL
+            com['count'] = len(MYLOST.result)
             # print(one.id,one.name,one.message,one.date,one.time,one.emotion)
             comments.append(com)
         return Response(comments)
@@ -340,7 +340,6 @@ class MYLOST(APIView):
 class MYFIND(APIView):
     result = None
     lenth = 0
-
     def get(self, request):
         openid = request.GET['openid']
         page = int(request.GET['page'])
@@ -365,6 +364,7 @@ class MYFIND(APIView):
             com['text'] = one.text
             com['type'] = one.type
             com['avatarURL'] = one.avatarURL
+            com['count'] = len(MYLOST.result)
             # print(one.id,one.name,one.message,one.date,one.time,one.emotion)
             comments.append(com)
         return Response(comments)
