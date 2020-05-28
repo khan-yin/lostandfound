@@ -248,6 +248,8 @@ class GETLOST(APIView):
     result = Event.objects.filter(status__in=['1'])
     lenth = len(result)
     def get(self, request):
+        self.result = Event.objects.filter(status__in=['1'])
+        self.lenth = len(self.result)
         page = int(request.GET['page'])
         print(page)
         print(self.lenth)
@@ -280,6 +282,8 @@ class GETFIND(APIView):
     def get(self, request):
         page = int(request.GET['page'])
         print(page)
+        self.result = Event.objects.filter(status__in=['3'])
+        self.lenth = len(self.result)
         comments = []
         if page*5>self.lenth:
             res = self.result[(page - 1) * 5:self.lenth]
@@ -305,12 +309,12 @@ class GETFIND(APIView):
 
 class MYLOST(APIView):
     result=None
+    len=0
     def get(self, request):
         openid = request.GET['openid']
         page = int(request.GET['page'])
-        if(page==1):
-            MYLOST.result = Event.objects.filter(status__in=['1', '2']).filter(openid=openid)
-            MYLOST.lenth = len(MYLOST.result)
+        MYLOST.result = Event.objects.filter(status__in=['1', '2']).filter(openid=openid)
+        MYLOST.lenth = len(MYLOST.result)
         print(MYLOST.result)
         comments = []
         if page*5>MYLOST.lenth:
@@ -338,19 +342,16 @@ class MYLOST(APIView):
 
 
 class MYFIND(APIView):
-    result = None
-    lenth = 0
     def get(self, request):
         openid = request.GET['openid']
         page = int(request.GET['page'])
-        if (page == 1):
-            MYFIND.result = Event.objects.filter(status__in=['3', '4']).filter(openid=openid)
-            MYFIND.lenth = len(MYFIND.result)
+        result = Event.objects.filter(status__in=['3', '4']).filter(openid=openid)
+        lenth = len(MYFIND.result)
         comments = []
-        if page*5>MYFIND.lenth:
-            res = MYFIND.result[(page - 1) * 5:MYFIND.lenth]
+        if page*5>result:
+            res = result[(page - 1) * 5:lenth]
         else:
-            res=MYFIND.result[(page-1)*5:page*5]
+            res=result[(page-1)*5:page*5]
         for one in res:
             com = {}
             com['id'] = one.id
@@ -364,7 +365,7 @@ class MYFIND(APIView):
             com['text'] = one.text
             com['type'] = one.type
             com['avatarURL'] = one.avatarURL
-            com['count'] = len(MYLOST.result)
+            com['count'] = len(result)
             # print(one.id,one.name,one.message,one.date,one.time,one.emotion)
             comments.append(com)
         return Response(comments)
