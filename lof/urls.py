@@ -14,5 +14,8 @@ urlpatterns = [
     path('mylost/',views.MYLOST.as_view()),
     path('myfind/',views.MYFIND.as_view()),
     path('getfind/',views.GETFIND.as_view()),
-    path('send2/',views.SEND2.as_view())
+    path('send2/',views.SEND2.as_view()),
+    path('changeStatus/',views.changeStatus,name='changeStatus'),
+    path('deleterequest/',views.deleterequest,name='deleterequest'),
+    path('searchevent/',views.searchevent,name='searchevent')
 ]

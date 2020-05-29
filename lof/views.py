@@ -23,7 +23,7 @@ from rest_framework import status
 from rest_framework.decorators import api_view, authentication_classes
 from rest_framework.response import Response
 from .models import Student,Event
-
+from . import search
 
 def test(request):
     return HttpResponse('ok')
@@ -177,7 +177,6 @@ class SEND2(APIView):
                event.phoneNumber = request.POST.get('phoneNumber')
                event.status = request.POST.get('status')
                event.qqNumber = request.POST.get('qqNumber')
-               event.date = request.POST.get('date')
                event.time = request.POST.get('time')
                event.avatarURL=request.POST.get('avatarURL')
                print(event.avatarURL)
@@ -205,11 +204,10 @@ class SEND(APIView):
                print(event.openid)
                event.truename = request.POST.get('truename')
                print(event.truename)
-               event.text = request.POST.get('date')
+               event.text = request.POST.get('text')
                event.qqNumber = request.POST.get('qqNumber')
                event.phoneNumber = request.POST.get('phoneNumber')
                event.type = request.POST.get('type')
-               event.date = request.POST.get('date')
                event.time = request.POST.get('time')
                event.status = request.POST.get('status')
                event.iscard = request.POST.get('iscard')
@@ -263,7 +261,6 @@ class GETLOST(APIView):
             com['id'] = one.id
             com['truename'] = one.truename
             com['photo'] = devide(one.photo)
-            com['date'] = one.date
             com['time'] = one.time
             com['phoneNumber'] = one.phoneNumber
             com['qqNumber'] = one.qqNumber
@@ -294,7 +291,6 @@ class GETFIND(APIView):
             com['id'] = one.id
             com['truename'] = one.truename
             com['photo'] = devide(one.photo)
-            com['date'] = one.date
             com['time'] = one.time
             com['phoneNumber'] = one.phoneNumber
             com['qqNumber'] = one.qqNumber
@@ -327,7 +323,6 @@ class MYLOST(APIView):
             com['id'] = one.id
             com['truename'] = one.truename
             com['photo'] = devide(one.photo)
-            com['date'] = one.date
             com['time'] = one.time
             com['phoneNumber'] = one.phoneNumber
             com['qqNumber'] = one.qqNumber
@@ -373,10 +368,59 @@ class MYFIND(APIView):
 
 
 
-
+@api_view(['GET'])
 def changeStatus(request):
-    pass
+    try:
+        id=int(request.GET['id'])
+        print(type(id))
+        print(id)
+        event=Event.objects.get(id=id)
+        event.status=str(int(event.status)+1)
+        event.save()
+        return Response({"msg":"操作成功"})
+    except Exception:
+        traceback.print_exc()
+        return Response({"msg": "操作失败"})
 
+@api_view(['GET'])
+def deleterequest(request):
+    try:
+        id = int(request.GET['id'])
+        Event.objects.get(id=id).delete()
+        return Response({"msg":"操作成功"})
+    except Exception:
+        traceback.print_exc()
+        return Response({"msg": "操作失败"})
+
+@api_view(['GET'])
 def searchevent(request):
-    pass
+    try:
+        msg=request.GET['content']
+        print(msg)
+        res = Event.objects.filter(status__in=['1','3'])
+        comments = []
+        for one in res:
+            if search.findintext(msg,one.truename) or search.findintext(msg,one.text) or search.findtime(msg,one.time):
+                com = {}
+                com['id'] = one.id
+                com['truename'] = one.truename
+                com['photo'] = devide(one.photo)
+                com['time'] = one.time
+                com['phoneNumber'] = one.phoneNumber
+                com['qqNumber'] = one.qqNumber
+                com['status'] = one.status
+                com['text'] = one.text
+                com['type'] = one.type
+                com['avatarURL'] = one.avatarURL
+                com['count'] = len(res)
+                # print(one.id,one.name,one.message,one.date,one.time,one.emotion)
+                comments.append(com)
+        return Response(comments)
+    except Exception:
+        traceback.print_exc()
+        return Response({"msg":"查询失败"})
+
+
+
+
 
