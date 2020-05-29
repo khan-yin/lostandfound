@@ -18,7 +18,6 @@ class Event(models.Model):
     truename = models.CharField(max_length=30,blank=True,null=True)
     text = models.CharField(max_length=500,blank=True,null=True)
     photo = models.CharField(max_length=500,blank=True,null=True)
-    date = models.CharField(max_length=100,blank=True,null=True)
     time = models.CharField(max_length=100,blank=True,null=True)
     phoneNumber = models.CharField(max_length=30, blank=True, null=True)
     qqNumber = models.CharField(max_length=30, blank=True, null=True)
