@@ -45,7 +45,7 @@ def wechatlogin(request):
     print(response)
     if 'errcode' in response:
         # 有错误码
-        return HttpResponse(json.dumps(response),content_type='application/json; charset=utf-8')
+        return HttpResponse(json.dumps(response), content_type='application/json; charset=utf-8')
     # 登录成功
     openid = response['openid']
     session_key = response['session_key']
@@ -60,7 +60,7 @@ def wechatlogin(request):
         user = Student.objects.create(openid=openid)
         print("ok")
     finally:
-        return HttpResponse(json.dumps(response),content_type='application/json; charset=utf-8')
+        return HttpResponse(json.dumps(response), content_type='application/json; charset=utf-8')
 
 
 def updateinfo(request):
@@ -73,42 +73,44 @@ def updateinfo(request):
         qqNumber = request.GET['qqNumber']
         email = request.GET['email']
         user = Student.objects.get(openid=openid)
-        if truename !='' and user.truename!=truename:
-            user.truename=truename
-        if college !='' and user.college!=college:
-            user.college=college
-        if cardNumber !='' and user.cardNumber!=cardNumber:
-            user.cardNumber=cardNumber
-        if qqNumber !='' and user.qqNumber!=qqNumber:
-            user.qqNumber=qqNumber
-        if phoneNumber !='' and user.phoneNumber != phoneNumber:
+        if truename != '' and user.truename != truename:
+            user.truename = truename
+        if college != '' and user.college != college:
+            user.college = college
+        if cardNumber != '' and user.cardNumber != cardNumber:
+            user.cardNumber = cardNumber
+        if qqNumber != '' and user.qqNumber != qqNumber:
+            user.qqNumber = qqNumber
+        if phoneNumber != '' and user.phoneNumber != phoneNumber:
             user.phoneNumber = phoneNumber
-        if email !='' and user.email!=email:
-            user.email=email
+        if email != '' and user.email != email:
+            user.email = email
         user.save()
-        return HttpResponse(json.dumps({'msg':'修改成功'}),status=200)
+        return HttpResponse(json.dumps({'msg': '修改成功'}), status=200)
     except Exception:
-        return HttpResponse(json.dumps({'msg':'修改失败'}),status=404)
+        return HttpResponse(json.dumps({'msg': '修改失败'}), status=404)
+
 
 def searchinfo(request):
-    res = {'data': {},'status': 500}
+    res = {'data': {}, 'status': 500}
     try:
         openid = request.GET['openid']
         user = Student.objects.get(openid=openid)
-        data={
-              'truename': user.truename,
-              'college': user.college,
-              'cardNumber':user.cardNumber,
-              'phoneNumber':user.phoneNumber,
-              'qqNumber':user.qqNumber,
-              'email':user.email
-              }
+        data = {
+            'truename': user.truename,
+            'college': user.college,
+            'cardNumber': user.cardNumber,
+            'phoneNumber': user.phoneNumber,
+            'qqNumber': user.qqNumber,
+            'email': user.email
+        }
         res['status'] = 200
         res['data'] = data
-        return HttpResponse(json.dumps(res),content_type='application/json; charset=utf-8')
+        return HttpResponse(json.dumps(res), content_type='application/json; charset=utf-8')
     except Exception:
-        res['status']=404
-        return HttpResponse(json.dumps(res),content_type='application/json; charset=utf-8')
+        res['status'] = 404
+        return HttpResponse(json.dumps(res), content_type='application/json; charset=utf-8')
+
 
 class Test(APIView):
     def get(self, request):
@@ -119,31 +121,34 @@ class Test(APIView):
         }
         return Response(res)
 
+
 def writecnt(cnt):
-    cnt=str(cnt)
-    file=os.path.join(settings.STATICFILES_DIRS[0], "cnt.txt")
+    cnt = str(cnt)
+    file = os.path.join(settings.STATICFILES_DIRS[0], "cnt.txt")
     print(file)
     with open(file, 'w') as f:
         f.writelines(cnt)
     f.close()
 
+
 def readcnt():
-    file=os.path.join(settings.STATICFILES_DIRS[0], "cnt.txt")
+    file = os.path.join(settings.STATICFILES_DIRS[0], "cnt.txt")
     print(file)
     with open(file, 'r') as f:
         a = f.readline()
     f.close()
     print(type(a))
-    a=int(a)
+    a = int(a)
     print(a)
     return a
+
 
 def devide(photo):
     if photo is None:
         return []
     m = photo.split(';')
     print(m)
-    com=[]
+    com = []
     for i in range(len(m)):
         com.append(str(m[i]))
     print(com)
@@ -151,124 +156,129 @@ def devide(photo):
 
 
 class SEND2(APIView):
-    count=readcnt()
+    count = readcnt()
+
     def post(self, request):
-       try:
-           event = Event()
-           if request.method == 'POST':
-               hasimage = request.POST.get('hasimage')
-               print(hasimage)
-               print(type(hasimage))
-               if hasimage is None:
-                   return Response({"msg": "发送失败"}, content_type="'application/json; charset=utf-8'")
-               if hasimage == '0':
-                   event = post_msg.add_event(event, request)
-                   return Response({"msg": "发送成功", "code": "200", "id": event.id},
-                                   content_type="'application/json; charset=utf-8'")
-               elif hasimage == '1':
-                   SEND.count += 1
-                   image = request.FILES['image']
-                   url = 'photo/' + str(SEND.count) + ".jpg"
-                   post_msg.write_img(image, url)
-                   ones = '/static/' + url
-                   print(ones)
-                   event.photo = ones
-                   print('ok')
-                   event = post_msg.add_event(event, request)
-                   return Response({"msg": "发送成功", "code": "200", "id": event.id},
-                                   content_type="'application/json; charset=utf-8'")
-               elif hasimage == '2':
-                   openid = request.POST.get('openid')
-                   if openid is not None:
-                       SEND.count += 1
-                       image = request.FILES['image']
-                       url = 'photo/' + str(SEND.count) + ".jpg"
-                       post_msg.write_img(image, url)
-                       ones = '/static/' + url
-                       print(ones)
-                       event.photo = ones
-                       print('ok')
-                       event = post_msg.add_event(event, request)
-                   else:
-                       id = request.POST.get('id')
-                       id = int(id)
-                       event = Event.objects.get(id=id)
-                       SEND.count += 1
-                       image = request.FILES['image']
-                       url = 'photo/' + str(SEND.count) + ".jpg"
-                       print(url)
-                       filename = os.path.join(settings.STATICFILES_DIRS[0], url)
-                       print(filename)
-                       with open(filename, 'wb') as f:
-                           f.write(image.read())
-                       f.close()
-                       one = ';/static/' + url
-                       event.photo += one
-                       event.save()
-                   return Response({"msg": "发送成功", "code": "200", "id": event.id},
-                                   content_type='application/json; charset=utf-8')
-       except Exception as e:
-           traceback.print_exc()
-           return Response({"msg": "发送失败"}, content_type='application/json; charset=utf-8')
-       finally:
-           writecnt(SEND.count)
+        try:
+            event = Event()
+            if request.method == 'POST':
+                hasimage = request.POST.get('hasimage')
+                print(hasimage)
+                print(type(hasimage))
+                if hasimage is None:
+                    return Response({"msg": "发送失败"}, content_type="'application/json; charset=utf-8'")
+                if hasimage == '0':
+                    event = post_msg.add_event(event, request)
+                    return Response({"msg": "发送成功", "code": "200", "id": event.id},
+                                    content_type="'application/json; charset=utf-8'")
+                elif hasimage == '1':
+                    SEND.count += 1
+                    image = request.FILES['image']
+                    url = 'photo/' + str(SEND.count) + ".jpg"
+                    post_msg.write_img(image, url)
+                    ones = '/static/' + url
+                    print(ones)
+                    event.photo = ones
+                    print('ok')
+                    event = post_msg.add_event(event, request)
+                    return Response({"msg": "发送成功", "code": "200", "id": event.id},
+                                    content_type="'application/json; charset=utf-8'")
+                elif hasimage == '2':
+                    openid = request.POST.get('openid')
+                    if openid is not None:
+                        SEND.count += 1
+                        image = request.FILES['image']
+                        url = 'photo/' + str(SEND.count) + ".jpg"
+                        post_msg.write_img(image, url)
+                        ones = '/static/' + url
+                        print(ones)
+                        event.photo = ones
+                        print('ok')
+                        event = post_msg.add_event(event, request)
+                    else:
+                        id = request.POST.get('id')
+                        id = int(id)
+                        event = Event.objects.get(id=id)
+                        SEND.count += 1
+                        image = request.FILES['image']
+                        url = 'photo/' + str(SEND.count) + ".jpg"
+                        print(url)
+                        filename = os.path.join(settings.STATICFILES_DIRS[0], url)
+                        print(filename)
+                        with open(filename, 'wb') as f:
+                            f.write(image.read())
+                        f.close()
+                        one = ';/static/' + url
+                        event.photo += one
+                        event.save()
+                    return Response({"msg": "发送成功", "code": "200", "id": event.id},
+                                    content_type='application/json; charset=utf-8')
+        except Exception as e:
+            traceback.print_exc()
+            return Response({"msg": "发送失败"}, content_type='application/json; charset=utf-8')
+        finally:
+            writecnt(SEND.count)
+
 
 class SEND(APIView):
-    count=readcnt()
+    count = readcnt()
+
     def post(self, request):
-       try:
-           back=SEND.count
-           if request.method == 'POST':
-               # s=str(request.body)
-               # re=json.loads(s)
-               # print(re['openid'])
-               print(request.body)
-               event=Event()
-               event.openid = request.POST.get('openid')
-               print(event.openid)
-               event.truename = request.POST.get('truename')
-               print(event.truename)
-               event.text = request.POST.get('text')
-               event.qqNumber = request.POST.get('qqNumber')
-               event.phoneNumber = request.POST.get('phoneNumber')
-               event.type = request.POST.get('type')
-               event.time = request.POST.get('time')
-               event.status = request.POST.get('status')
-               event.iscard = request.POST.get('iscard')
-               event.avatarURL = request.POST.get('avatarURL')
-               urls = ''
-               photolist = ['photo1', 'photo2', 'photo3', 'photo4', 'photo5', 'photo6']
-               for i in photolist:
-                   re = request.POST.get(i, '')
-                   if re != '':
-                       SEND.count += 1
-                       img = re.split(',')[1]
-                       img = bytes(img, encoding='utf-8')
-                       data = base64.b64decode(img)
-                       url = "photo/" + str(SEND.count) + ".jpg"
-                       filename = os.path.join(settings.STATICFILES_DIRS[0], url)
-                       print(filename)
-                       with open(filename, 'wb') as f:
-                           f.write(data)
-                       ones = '/static/' + url
-                       ones += ';'
-                       print(ones)
-                       urls += ones
-                       print(urls)
-               event.photo=urls[:-1]
-               writecnt(SEND.count)
-               event.save()
-               return Response({"msg": "发送成功", "code": "200"})
-       except Exception as e:
-           traceback.print_exc()
-           SEND.count=back
-           return Response({"msg": "发送失败"})
-       finally:
-           writecnt(SEND.count)
+        try:
+            back = SEND.count
+            if request.method == 'POST':
+                # s=str(request.body)
+                # re=json.loads(s)
+                # print(re['openid'])
+                print(request.body)
+                event = Event()
+                event.openid = request.POST.get('openid')
+                print(event.openid)
+                event.truename = request.POST.get('truename')
+                print(event.truename)
+                event.text = request.POST.get('text')
+                event.qqNumber = request.POST.get('qqNumber')
+                event.phoneNumber = request.POST.get('phoneNumber')
+                event.type = request.POST.get('type')
+                event.time = request.POST.get('time')
+                event.status = request.POST.get('status')
+                event.iscard = request.POST.get('iscard')
+                event.avatarURL = request.POST.get('avatarURL')
+                urls = ''
+                photolist = ['photo1', 'photo2', 'photo3', 'photo4', 'photo5', 'photo6']
+                for i in photolist:
+                    re = request.POST.get(i, '')
+                    if re != '':
+                        SEND.count += 1
+                        img = re.split(',')[1]
+                        img = bytes(img, encoding='utf-8')
+                        data = base64.b64decode(img)
+                        url = "photo/" + str(SEND.count) + ".jpg"
+                        filename = os.path.join(settings.STATICFILES_DIRS[0], url)
+                        print(filename)
+                        with open(filename, 'wb') as f:
+                            f.write(data)
+                        ones = '/static/' + url
+                        ones += ';'
+                        print(ones)
+                        urls += ones
+                        print(urls)
+                event.photo = urls[:-1]
+                writecnt(SEND.count)
+                event.save()
+                return Response({"msg": "发送成功", "code": "200"})
+        except Exception as e:
+            traceback.print_exc()
+            SEND.count = back
+            return Response({"msg": "发送失败"})
+        finally:
+            writecnt(SEND.count)
+
 
 class GETLOST(APIView):
     result = Event.objects.filter(status__in=['1'])
     lenth = len(result)
+
     def get(self, request):
         self.result = Event.objects.filter(status__in=['1'])
         self.lenth = len(self.result)
@@ -276,10 +286,10 @@ class GETLOST(APIView):
         print(page)
         print(self.lenth)
         comments = []
-        if page*5>self.lenth:
+        if page * 5 > self.lenth:
             res = self.result[(page - 1) * 5:self.lenth]
         else:
-            res=self.result[(page-1)*5:page*5]
+            res = self.result[(page - 1) * 5:page * 5]
         for one in res:
             com = {}
             com['id'] = one.id
@@ -299,19 +309,21 @@ class GETLOST(APIView):
         print(type(res))
         return Response(comments)
 
+
 class GETFIND(APIView):
     result = Event.objects.filter(status__in=['3'])
     lenth = len(result)
+
     def get(self, request):
         page = int(request.GET['page'])
         print(page)
         self.result = Event.objects.filter(status__in=['3'])
         self.lenth = len(self.result)
         comments = []
-        if page*5>self.lenth:
+        if page * 5 > self.lenth:
             res = self.result[(page - 1) * 5:self.lenth]
         else:
-            res=self.result[(page-1)*5:page*5]
+            res = self.result[(page - 1) * 5:page * 5]
         for one in res:
             com = {}
             com['id'] = one.id
@@ -329,9 +341,11 @@ class GETFIND(APIView):
         print(comments)
         return Response(comments)
 
+
 class MYLOST(APIView):
-    result=None
-    len=0
+    result = None
+    len = 0
+
     def get(self, request):
         openid = request.GET['openid']
         page = int(request.GET['page'])
@@ -339,11 +353,11 @@ class MYLOST(APIView):
         MYLOST.lenth = len(MYLOST.result)
         print(MYLOST.result)
         comments = []
-        if page*5>MYLOST.lenth:
+        if page * 5 > MYLOST.lenth:
             res = MYLOST.result[(page - 1) * 5:MYLOST.lenth]
         else:
-            res=MYLOST.result[(page-1)*5:page*5]
-        print("res:",res)
+            res = MYLOST.result[(page - 1) * 5:page * 5]
+        print("res:", res)
         for one in res:
             com = {}
             com['id'] = one.id
@@ -372,7 +386,7 @@ class MYFIND(APIView):
         if page * 5 > lenth:
             res = result[(page - 1) * 5:lenth]
         else:
-            res=result[(page-1)*5:page*5]
+            res = result[(page - 1) * 5:page * 5]
         for one in res:
             com = {}
             com['id'] = one.id
@@ -394,13 +408,13 @@ class MYFIND(APIView):
 @api_view(['GET'])
 def changeStatus(request):
     try:
-        id=int(request.GET['id'])
+        id = int(request.GET['id'])
         print(type(id))
         print(id)
-        event=Event.objects.get(id=id)
-        event.status=str(int(event.status)+1)
+        event = Event.objects.get(id=id)
+        event.status = str(int(event.status) + 1)
         event.save()
-        return Response({"msg":"操作成功"})
+        return Response({"msg": "操作成功"})
     except Exception:
         traceback.print_exc()
         return Response({"msg": "操作失败"})
@@ -411,7 +425,7 @@ def deleterequest(request):
     try:
         id = int(request.GET['id'])
         Event.objects.get(id=id).delete()
-        return Response({"msg":"操作成功"})
+        return Response({"msg": "操作成功"})
     except Exception:
         traceback.print_exc()
         return Response({"msg": "操作失败"})
@@ -426,7 +440,8 @@ def searchevent(request):
         res = Event.objects.filter(status__in=[status])
         comments = []
         for one in res:
-            if search.findintext(msg,one.truename) or search.findintext(msg,one.text) or search.findtime(msg,one.time):
+            if search.findintext(msg, one.truename) or search.findintext(msg, one.text) or search.findtime(msg,
+                                                                                                           one.time):
                 com = {}
                 com['id'] = one.id
                 com['truename'] = one.truename
@@ -444,7 +459,7 @@ def searchevent(request):
         return Response(comments)
     except Exception:
         traceback.print_exc()
-        return Response({"msg":"查询失败"})
+        return Response({"msg": "查询失败"})
 
 
 @api_view(['GET'])

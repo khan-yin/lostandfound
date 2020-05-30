@@ -15,7 +15,6 @@ import os
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.0/howto/deployment/checklist/
 
@@ -26,7 +25,6 @@ SECRET_KEY = '!vbafbu*@2xlcd5%y$^wmba8(-yww_2!xo+sf*+ji$bwppju@v'
 DEBUG = True
 
 ALLOWED_HOSTS = ['*']
-
 
 # Application definition
 
@@ -75,25 +73,23 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'lostandfound.wsgi.application'
 
-
 # Database
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
 
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'lof',    #你的数据库名称
-        'USER': 'root',   #你的数据库用户名
-        'PASSWORD': '123456', #你的数据库密码
-        'HOST': 'localhost', #你的数据库主机，留空默认为localhost
-        'PORT': '3306', #你的数据库端口
+        'NAME': 'lof',  # 你的数据库名称
+        'USER': 'root',  # 你的数据库用户名
+        'PASSWORD': '123456',  # 你的数据库密码
+        'HOST': 'localhost',  # 你的数据库主机，留空默认为localhost
+        'PORT': '3306',  # 你的数据库端口
     },
     'TEST': {
-            'CHARSET' : 'utf8',
-            'COLLATION':'utf8_general_ci'
-        }
+        'CHARSET': 'utf8',
+        'COLLATION': 'utf8_general_ci'
+    }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/3.0/ref/settings/#auth-password-validators
@@ -113,7 +109,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/3.0/topics/i18n/
 
@@ -127,13 +122,12 @@ USE_L10N = True
 
 USE_TZ = True
 
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
 
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'templates/static'),       #通过和项目根路径拼接得到static的路径
+    os.path.join(BASE_DIR, 'templates/static'),  # 通过和项目根路径拼接得到static的路径
 ]
 
 CORS_ALLOW_CREDENTIALS = True
