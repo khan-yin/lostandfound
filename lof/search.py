@@ -50,8 +50,8 @@ def findintext(str1,str2):
         return True
     else:
         flag=False
-        if len(str1)<=4:
-            flag = findforkeyword(list1,str2)
+        if len(str1) <= 6:
+            flag = findforkeyword(list1, str2)
         return flag
 
 

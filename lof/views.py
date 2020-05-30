@@ -5,7 +5,7 @@ from django.shortcuts import render
 # Create your views here.
 from io import BytesIO
 from django.shortcuts import render
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 import json
 import base64
 import os
@@ -22,8 +22,10 @@ import requests
 from rest_framework import status
 from rest_framework.decorators import api_view, authentication_classes
 from rest_framework.response import Response
-from .models import Student,Event
-from . import search
+from .models import Student, Event
+from . import search, post_msg
+import random
+
 
 def test(request):
     return HttpResponse('ok')
@@ -32,7 +34,7 @@ def test(request):
 # @api_view(['POST'])
 
 def wechatlogin(request):
-    #前端发送code到后端,后端发送网络请求到微信服务器换取openid
+    # 前端发送code到后端,后端发送网络请求到微信服务器换取openid
     appid = 'wxb3a8c258fd1798f6'
     secret = 'd10e2068511e6e478013b5eaeae4267e'
     print(1)
@@ -147,45 +149,67 @@ def devide(photo):
     print(com)
     return com
 
+
 class SEND2(APIView):
     count=readcnt()
     def post(self, request):
        try:
+           event = Event()
            if request.method == 'POST':
                hasimage = request.POST.get('hasimage')
+               print(hasimage)
                print(type(hasimage))
-               event = Event()
-               if(hasimage=='1'):
-                   SEND.count+=1
+               if hasimage is None:
+                   return Response({"msg": "发送失败"}, content_type="'application/json; charset=utf-8'")
+               if hasimage == '0':
+                   event = post_msg.add_event(event, request)
+                   return Response({"msg": "发送成功", "code": "200", "id": event.id},
+                                   content_type="'application/json; charset=utf-8'")
+               elif hasimage == '1':
+                   SEND.count += 1
                    image = request.FILES['image']
-                   url='photo/'+str(SEND.count)+".jpg"
-                   filename = os.path.join(settings.STATICFILES_DIRS[0],url)
-                   print(filename)
-                   with open(filename, 'wb') as f:
-                       f.write(image.read())
-                       f.close()
+                   url = 'photo/' + str(SEND.count) + ".jpg"
+                   post_msg.write_img(image, url)
                    ones = '/static/' + url
                    print(ones)
-                   event.photo=ones
+                   event.photo = ones
                    print('ok')
-               event.openid=request.POST.get('openid')
-               print(event.openid)
-               event.truename=request.POST.get('truename')
-               event.text=request.POST.get('text')
-               print(event.text)
-               event.type = request.POST.get('type')
-               event.phoneNumber = request.POST.get('phoneNumber')
-               event.status = request.POST.get('status')
-               event.qqNumber = request.POST.get('qqNumber')
-               event.time = request.POST.get('time')
-               event.avatarURL=request.POST.get('avatarURL')
-               print(event.avatarURL)
-               event.save()
-               return Response({"msg": "发送成功", "code": "200"})
+                   event = post_msg.add_event(event, request)
+                   return Response({"msg": "发送成功", "code": "200", "id": event.id},
+                                   content_type="'application/json; charset=utf-8'")
+               elif hasimage == '2':
+                   openid = request.POST.get('openid')
+                   if openid is not None:
+                       SEND.count += 1
+                       image = request.FILES['image']
+                       url = 'photo/' + str(SEND.count) + ".jpg"
+                       post_msg.write_img(image, url)
+                       ones = '/static/' + url
+                       print(ones)
+                       event.photo = ones
+                       print('ok')
+                       event = post_msg.add_event(event, request)
+                   else:
+                       id = request.POST.get('id')
+                       id = int(id)
+                       event = Event.objects.get(id=id)
+                       SEND.count += 1
+                       image = request.FILES['image']
+                       url = 'photo/' + str(SEND.count) + ".jpg"
+                       print(url)
+                       filename = os.path.join(settings.STATICFILES_DIRS[0], url)
+                       print(filename)
+                       with open(filename, 'wb') as f:
+                           f.write(image.read())
+                       f.close()
+                       one = ';/static/' + url
+                       event.photo += one
+                       event.save()
+                   return Response({"msg": "发送成功", "code": "200", "id": event.id},
+                                   content_type='application/json; charset=utf-8')
        except Exception as e:
            traceback.print_exc()
-           # SEND.count=back
-           return Response({"msg": "发送失败"})
+           return Response({"msg": "发送失败"}, content_type='application/json; charset=utf-8')
        finally:
            writecnt(SEND.count)
 
@@ -271,6 +295,8 @@ class GETLOST(APIView):
             # print(one.id,one.name,one.message,one.date,one.time,one.emotion)
             comments.append(com)
         # print(comments)
+        res = Response(comments)
+        print(type(res))
         return Response(comments)
 
 class GETFIND(APIView):
@@ -341,9 +367,9 @@ class MYFIND(APIView):
         openid = request.GET['openid']
         page = int(request.GET['page'])
         result = Event.objects.filter(status__in=['3', '4']).filter(openid=openid)
-        lenth = len(MYFIND.result)
+        lenth = len(result)
         comments = []
-        if page*5>result:
+        if page * 5 > lenth:
             res = result[(page - 1) * 5:lenth]
         else:
             res=result[(page-1)*5:page*5]
@@ -352,7 +378,6 @@ class MYFIND(APIView):
             com['id'] = one.id
             com['truename'] = one.truename
             com['photo'] = devide(one.photo)
-            com['date'] = one.date
             com['time'] = one.time
             com['phoneNumber'] = one.phoneNumber
             com['qqNumber'] = one.qqNumber
@@ -364,8 +389,6 @@ class MYFIND(APIView):
             # print(one.id,one.name,one.message,one.date,one.time,one.emotion)
             comments.append(com)
         return Response(comments)
-
-
 
 
 @api_view(['GET'])
@@ -382,6 +405,7 @@ def changeStatus(request):
         traceback.print_exc()
         return Response({"msg": "操作失败"})
 
+
 @api_view(['GET'])
 def deleterequest(request):
     try:
@@ -392,12 +416,14 @@ def deleterequest(request):
         traceback.print_exc()
         return Response({"msg": "操作失败"})
 
+
 @api_view(['GET'])
 def searchevent(request):
     try:
-        msg=request.GET['content']
+        msg = request.GET['content']
+        status = request.GET['status']
         print(msg)
-        res = Event.objects.filter(status__in=['1','3'])
+        res = Event.objects.filter(status__in=[status])
         comments = []
         for one in res:
             if search.findintext(msg,one.truename) or search.findintext(msg,one.text) or search.findtime(msg,one.time):
@@ -421,6 +447,32 @@ def searchevent(request):
         return Response({"msg":"查询失败"})
 
 
+@api_view(['GET'])
+def sendcardmsg(request):
+    appid = 'wxb3a8c258fd1798f6'
+    secret = 'd10e2068511e6e478013b5eaeae4267e'
+    wx_accesstoken_url = "https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=" + appid + "&secret=" + secret
+    response = json.loads(requests.get(wx_accesstoken_url).content)  # 将json数据包转成字典
+    print(response)
+    if 'errcode' in response:
+        # 有错误码
+        return HttpResponse(json.dumps(response), content_type='application/json; charset=utf-8')
 
 
-
+@api_view(['GET'])
+def cardattention(request):
+    try:
+        card = request.GET['card']
+        qq = request.GET['qqNumber']
+        phone = request.GET['phoneNumber']
+        stu = Student.objects.get(cardNumber=card)
+        msg = '请问您是{}同学吗，你的校园卡被这位同学捡到了，请联系TA来领取,TA的qq是{},电话是{}' \
+            .format(stu.truename, qq, phone)
+        if stu is not None:
+            flag = post_msg.emailto(stu.email, '校园卡提醒', msg)
+            if flag:
+                return Response({"msg": "发送成功"})
+            else:
+                return Response({"msg": "发送失败"})
+    except Exception:
+        return Response({'msg': '该系统中暂时还没有这位同学的信息'})
