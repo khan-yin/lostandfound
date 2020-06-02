@@ -478,6 +478,25 @@ def sendcardmsg(request):
 @api_view(['GET'])
 def cardattention(request):
     try:
+        card = request.GET['card']
+        qq = request.GET['qqNumber']
+        phone = request.GET['phoneNumber']
+        stu = Student.objects.get(cardNumber=card)
+        msg = '请问您是{}同学吗，你的校园卡被这位同学捡到了，请联系TA来领取,TA的qq是{},电话是{}' \
+            .format(stu.truename, qq, phone)
+        if stu is not None:
+            flag = post_msg.emailto(stu.email, '校园卡提醒', msg)
+            if flag:
+                return Response({"msg": "发送成功"})
+            else:
+                return Response({"msg": "发送失败"})
+    except Exception:
+        return Response({'msg': '该系统中暂时还没有这位同学的信息'})
+
+
+@api_view(['GET'])
+def cardattention2(request):
+    try:
         appid = 'wxb3a8c258fd1798f6'
         secret = 'd10e2068511e6e478013b5eaeae4267e'
         url = "https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=" + appid + "&secret=" + secret
