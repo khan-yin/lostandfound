@@ -1,3 +1,4 @@
+import datetime
 import traceback
 
 from django.shortcuts import render
@@ -477,13 +478,54 @@ def sendcardmsg(request):
 @api_view(['GET'])
 def cardattention(request):
     try:
+        appid = 'wxb3a8c258fd1798f6'
+        secret = 'd10e2068511e6e478013b5eaeae4267e'
+        url = "https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=" + appid + "&secret=" + secret
+        response = json.loads(requests.get(url).content)  # 将json数据包转成字典
+        print(response)
+        if 'errcode' in response:
+            # 有错误码
+            return Response({"msg": "发送失败"})
+        template_id = 'PHNBs--6jdaJaLsv6u8R-Ljn3ARAIhotG-kuFWcttsc'
+        access_token = response['access_token']
+        now = datetime.datetime.now()
+        otherStyleTime = now.strftime("%Y-%m-%d %H:%M:%S")
+        formId = request.GET['formId']
+        # 登录成功
         card = request.GET['card']
         qq = request.GET['qqNumber']
         phone = request.GET['phoneNumber']
         stu = Student.objects.get(cardNumber=card)
         msg = '请问您是{}同学吗，你的校园卡被这位同学捡到了，请联系TA来领取,TA的qq是{},电话是{}' \
             .format(stu.truename, qq, phone)
+        push_data = {
+            "keyword1": {
+                "value": "校园卡"
+            },
+            "keyword2": {
+                "value": stu.truename
+            },
+            "keyword3": {
+                "value": otherStyleTime
+            },
+            "keyword4": {
+                "value": stu.phoneNumber
+            }
+        }
         if stu is not None:
+            if access_token:
+                # 如果存在accesstoken
+                payload = {
+                    'touser': stu.openid,  # 这里为用户的openid
+                    'template_id': template_id,  # 模板id
+                    'form_id': formId,  # 表单id或者prepay_id
+                    'data': push_data  # 模板填充的数据
+                }
+
+                response = requests.post(
+                    f'https://api.weixin.qq.com/cgi-bin/message/wxopen/template/send?access_token={access_token}',
+                    json=payload)
+                print(response)
             flag = post_msg.emailto(stu.email, '校园卡提醒', msg)
             if flag:
                 return Response({"msg": "发送成功"})
