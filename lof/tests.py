@@ -3,9 +3,9 @@ from email.mime.text import MIMEText
 from email.header import Header
 import random
 
-from_addr = '838278270@qq.com'  # 邮件发送账号
-to_addrs = '975189452@qq.com'  # 接收邮件账号
-qqCode = 'njlpqtmrykfrbajj'  # 授权码（这个要填自己获取到的）
+from_addr = 'xx'  # 邮件发送账号
+to_addrs = 'xx'  # 接收邮件账号
+qqCode = 'xxx'  # 授权码（这个要填自己获取到的）
 smtp_server = 'smtp.qq.com'  # 固定写死
 smtp_port = 465  # 固定端口
 
