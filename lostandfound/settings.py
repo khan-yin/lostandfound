@@ -15,6 +15,7 @@ import os
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.0/howto/deployment/checklist/
 
@@ -25,6 +26,7 @@ SECRET_KEY = '!vbafbu*@2xlcd5%y$^wmba8(-yww_2!xo+sf*+ji$bwppju@v'
 DEBUG = True
 
 ALLOWED_HOSTS = ['*']
+
 
 # Application definition
 
@@ -81,7 +83,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'lof',  # 你的数据库名称
         'USER': 'root',  # 你的数据库用户名
-        'PASSWORD': '123456',  # 你的数据库密码
+        'PASSWORD': '12345678',  # 你的数据库密码
         'HOST': 'localhost',  # 你的数据库主机，留空默认为localhost
         'PORT': '3306',  # 你的数据库端口
     },

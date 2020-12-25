@@ -14,7 +14,6 @@ import smtplib
 from email.mime.text import MIMEText
 from email.header import Header
 
-
 def write_img(image, url):
     filename = os.path.join(settings.STATICFILES_DIRS[0], url)
     print(filename)

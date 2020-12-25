@@ -1,6 +1,5 @@
 from django.urls import path
 from . import views
-
 app_name = 'lof'
 
 urlpatterns = [
@@ -19,6 +18,5 @@ urlpatterns = [
     path('changeStatus/', views.changeStatus, name='changeStatus'),
     path('deleterequest/', views.deleterequest, name='deleterequest'),
     path('searchevent/', views.searchevent, name='searchevent'),
-    path('cardattention/', views.cardattention, name='cardattention'),
-    path('cardattention2/', views.cardattention2, name='cardattention2')
+    path('cardattention/', views.cardattention, name='cardattention')
 ]

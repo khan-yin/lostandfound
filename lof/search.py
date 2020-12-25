@@ -14,7 +14,6 @@ from collections import Counter
 import jieba
 import re
 
-
 def spiltword(str):
     seg_list = jieba.cut_for_search(str)  # 搜索引擎模式
     result = list(seg_list)

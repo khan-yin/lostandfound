@@ -1,4 +1,3 @@
-import datetime
 import traceback
 
 from django.shortcuts import render
@@ -26,6 +25,8 @@ from rest_framework.response import Response
 from .models import Student, Event
 from . import search, post_msg
 import random
+from .dbConnect import *
+from .DB_Operations import *
 
 
 def test(request):
@@ -73,6 +74,8 @@ def updateinfo(request):
         phoneNumber = request.GET['phoneNumber']
         qqNumber = request.GET['qqNumber']
         email = request.GET['email']
+        Update(openid=openid, truename=truename, college=college, cardNumber=cardNumber, phoneNumber=phoneNumber,
+               qqNumber=qqNumber, email=email)
         user = Student.objects.get(openid=openid)
         if truename != '' and user.truename != truename:
             user.truename = truename
@@ -91,7 +94,6 @@ def updateinfo(request):
     except Exception:
         return HttpResponse(json.dumps({'msg': '修改失败'}), status=404)
 
-
 def searchinfo(request):
     res = {'data': {}, 'status': 500}
     try:
@@ -105,13 +107,15 @@ def searchinfo(request):
             'qqNumber': user.qqNumber,
             'email': user.email
         }
+
+        data = Search_By_Openid(openid)
+
         res['status'] = 200
         res['data'] = data
         return HttpResponse(json.dumps(res), content_type='application/json; charset=utf-8')
     except Exception:
         res['status'] = 404
         return HttpResponse(json.dumps(res), content_type='application/json; charset=utf-8')
-
 
 class Test(APIView):
     def get(self, request):
@@ -131,7 +135,6 @@ def writecnt(cnt):
         f.writelines(cnt)
     f.close()
 
-
 def readcnt():
     file = os.path.join(settings.STATICFILES_DIRS[0], "cnt.txt")
     print(file)
@@ -142,7 +145,6 @@ def readcnt():
     a = int(a)
     print(a)
     return a
-
 
 def devide(photo):
     if photo is None:
@@ -220,7 +222,6 @@ class SEND2(APIView):
         finally:
             writecnt(SEND.count)
 
-
 class SEND(APIView):
     count = readcnt()
 
@@ -276,10 +277,10 @@ class SEND(APIView):
             writecnt(SEND.count)
 
 
+# getlost获取丢失的所有信息
 class GETLOST(APIView):
     result = Event.objects.filter(status__in=['1'])
     lenth = len(result)
-
     def get(self, request):
         self.result = Event.objects.filter(status__in=['1'])
         self.lenth = len(self.result)
@@ -306,15 +307,18 @@ class GETLOST(APIView):
             # print(one.id,one.name,one.message,one.date,one.time,one.emotion)
             comments.append(com)
         # print(comments)
+        comments2 = getMsgsql(page, "1")
+        res2 = Response(comments2)
         res = Response(comments)
         print(type(res))
-        return Response(comments)
+        print(type(res2))
+        return Response(comments2)
 
 
+#getfind获取招领的所有信息
 class GETFIND(APIView):
     result = Event.objects.filter(status__in=['3'])
     lenth = len(result)
-
     def get(self, request):
         page = int(request.GET['page'])
         print(page)
@@ -340,7 +344,9 @@ class GETFIND(APIView):
             # print(one.id,one.name,one.message,one.date,one.time,one.emotion)
             comments.append(com)
         print(comments)
-        return Response(comments)
+        comments2 = getMsgsql(page, "3")
+        res2 = Response(comments2)
+        return Response(comments2)
 
 
 class MYLOST(APIView):
@@ -374,7 +380,9 @@ class MYLOST(APIView):
             com['count'] = len(MYLOST.result)
             # print(one.id,one.name,one.message,one.date,one.time,one.emotion)
             comments.append(com)
-        return Response(comments)
+        comments2 = getMyinfo(page, openid, "lost")
+
+        return Response(comments2)
 
 
 class MYFIND(APIView):
@@ -403,7 +411,8 @@ class MYFIND(APIView):
             com['count'] = len(result)
             # print(one.id,one.name,one.message,one.date,one.time,one.emotion)
             comments.append(com)
-        return Response(comments)
+        comments2 = getMyinfo(page, openid, "find")
+        return Response(comments2)
 
 
 @api_view(['GET'])
@@ -412,9 +421,10 @@ def changeStatus(request):
         id = int(request.GET['id'])
         print(type(id))
         print(id)
-        event = Event.objects.get(id=id)
-        event.status = str(int(event.status) + 1)
-        event.save()
+        # event=Event.objects.get(id=id)
+        # event.status=str(int(event.status)+1)
+        # event.save()
+        ChangeSta(id)
         return Response({"msg": "操作成功"})
     except Exception:
         traceback.print_exc()
@@ -425,7 +435,8 @@ def changeStatus(request):
 def deleterequest(request):
     try:
         id = int(request.GET['id'])
-        Event.objects.get(id=id).delete()
+        Delete(id)
+        # Event.objects.get(id=id).delete()
         return Response({"msg": "操作成功"})
     except Exception:
         traceback.print_exc()
@@ -482,70 +493,15 @@ def cardattention(request):
         qq = request.GET['qqNumber']
         phone = request.GET['phoneNumber']
         stu = Student.objects.get(cardNumber=card)
+
+        data = Search_By_CardNumber(cardNumber=card)
+        # msg = '请问您是{}同学吗，你的校园卡被这位同学捡到了，请联系TA来领取,TA的qq是{},电话是{}' \
+        #     .format(stu.truename, qq, phone)
         msg = '请问您是{}同学吗，你的校园卡被这位同学捡到了，请联系TA来领取,TA的qq是{},电话是{}' \
-            .format(stu.truename, qq, phone)
+            .format(data["truename"], data["qqNumber"], data["phoneNumber"])
         if stu is not None:
             flag = post_msg.emailto(stu.email, '校园卡提醒', msg)
-            if flag:
-                return Response({"msg": "发送成功"})
-            else:
-                return Response({"msg": "发送失败"})
-    except Exception:
-        return Response({'msg': '该系统中暂时还没有这位同学的信息'})
-
-
-@api_view(['GET'])
-def cardattention2(request):
-    try:
-        appid = 'wxb3a8c258fd1798f6'
-        secret = 'd10e2068511e6e478013b5eaeae4267e'
-        url = "https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=" + appid + "&secret=" + secret
-        response = json.loads(requests.get(url).content)  # 将json数据包转成字典
-        print(response)
-        if 'errcode' in response:
-            # 有错误码
-            return Response({"msg": "发送失败"})
-        template_id = 'PHNBs--6jdaJaLsv6u8R-Ljn3ARAIhotG-kuFWcttsc'
-        access_token = response['access_token']
-        now = datetime.datetime.now()
-        otherStyleTime = now.strftime("%Y-%m-%d %H:%M:%S")
-        formId = request.GET['formId']
-        # 登录成功
-        card = request.GET['card']
-        qq = request.GET['qqNumber']
-        phone = request.GET['phoneNumber']
-        stu = Student.objects.get(cardNumber=card)
-        msg = '请问您是{}同学吗，你的校园卡被这位同学捡到了，请联系TA来领取,TA的qq是{},电话是{}' \
-            .format(stu.truename, qq, phone)
-        push_data = {
-            "keyword1": {
-                "value": "校园卡"
-            },
-            "keyword2": {
-                "value": stu.truename
-            },
-            "keyword3": {
-                "value": otherStyleTime
-            },
-            "keyword4": {
-                "value": stu.phoneNumber
-            }
-        }
-        if stu is not None:
-            if access_token:
-                # 如果存在accesstoken
-                payload = {
-                    'touser': stu.openid,  # 这里为用户的openid
-                    'template_id': template_id,  # 模板id
-                    'form_id': formId,  # 表单id或者prepay_id
-                    'data': push_data  # 模板填充的数据
-                }
-
-                response = requests.post(
-                    f'https://api.weixin.qq.com/cgi-bin/message/wxopen/template/send?access_token={access_token}',
-                    json=payload)
-                print(response)
-            flag = post_msg.emailto(stu.email, '校园卡提醒', msg)
+            # flag = post_msg.emailto(data["email"],'校园卡提醒',msg)
             if flag:
                 return Response({"msg": "发送成功"})
             else:
