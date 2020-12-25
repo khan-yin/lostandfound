@@ -37,8 +37,8 @@ def test(request):
 
 def wechatlogin(request):
     # 前端发送code到后端,后端发送网络请求到微信服务器换取openid
-    appid = 'wxb3a8c258fd1798f6'
-    secret = 'd10e2068511e6e478013b5eaeae4267e'
+    appid = ''
+    secret = ''
     print(1)
     js_code = request.GET['code']
     print(js_code)

@@ -5,7 +5,14 @@
       <paths name="aliyun">
         <serverdata>
           <mappings>
-            <mapping deploy="/home/lostandfound" local="$PROJECT_DIR$" web="/" />
+            <mapping deploy="/lostandfound" local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="aliyun (project level)">
+        <serverdata>
+          <mappings>
+            <mapping local="$PROJECT_DIR$" web="/" />
           </mappings>
         </serverdata>
       </paths>
